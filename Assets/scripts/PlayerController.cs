@@ -32,6 +32,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private float _groundDistance = .1f;
     [SerializeField] private float _trowForce = 5f;
+    [SerializeField] private float impactForce = 15;
     [SerializeField] private LayerMask _groundMask;
     [SerializeField] private Transform pickThreshold;
 
@@ -74,23 +75,27 @@ public class PlayerController : MonoBehaviour
         if(_objToPick != null && _canPick && pickAction.triggered && _holdingObj == null)
         {
             _canPick = false;
-            _objToPick.position = pickThreshold.position;
-            _objToPick.rotation = pickThreshold.rotation;
-            _objToPick.parent = pickThreshold;
-            _holdingObj = _objToPick;
-            var pickObj = _holdingObj.GetComponent<PickObjectBehaviour>();
+            var pickObj = _objToPick.GetComponent<PickObjectBehaviour>();
             pickObj.GotPicked();
+            _holdingObj = _objToPick;
+            _holdingObj.position = pickThreshold.position;
+            _holdingObj.rotation = pickThreshold.rotation;
+            _holdingObj.parent = pickThreshold;
         }
         else if(_holdingObj != null && pickAction.triggered)
         {
-            Rigidbody rb = _holdingObj.gameObject.AddComponent<Rigidbody>();
-            rb.AddForce(rb.transform.forward * _trowForce, ForceMode.Impulse);
-            var pickObj = _holdingObj.GetComponent<PickObjectBehaviour>();
-            pickObj.GotLoose();
-            _holdingObj.parent = null;
-            _holdingObj = null;
-            
+            ThrowObject(transform.forward * _trowForce);
         }
+    }
+
+    void ThrowObject(Vector3 dir)
+    {
+        var pickObj = _holdingObj.GetComponent<PickObjectBehaviour>();
+        Rigidbody rb = _holdingObj.gameObject.AddComponent<Rigidbody>();
+        rb.AddForce(dir, ForceMode.Impulse);
+        _holdingObj.parent = null;
+        _holdingObj = null;
+        pickObj.GotLoose();
     }
 
     void Rotate()
@@ -113,8 +118,7 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        Debug.Log("trigger");
-        if(other.CompareTag("pick-obj") && _holdingObj == null)
+        if(other.CompareTag(StringTag.PickObject) && _holdingObj == null)
         {
             _canPick = true;
             _objToPick = other.transform;
@@ -123,8 +127,21 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if(other.CompareTag("pick-obj") || other.CompareTag("stil-place"))
+        if(other.CompareTag(StringTag.PickObject) || other.CompareTag("stil-place"))
             _canPick = false;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag == StringTag.MovingObstacle)
+        {
+            Vector3 collisionDir = collision.GetContact(0).normal;
+            _playerRb.AddForce(new Vector3(collisionDir.x, .2f, collisionDir.z) * impactForce, ForceMode.Impulse);
+            _playerRb.AddTorque(Vector3.up * impactForce, ForceMode.Impulse);
+
+            if(_holdingObj != null) 
+                ThrowObject(new Vector3(Random.Range(.1f, .3f),Random.Range(.1f, .3f),Random.Range(.1f, .3f)) * impactForce);
+        }
     }
 
     private void CheckGrounded()

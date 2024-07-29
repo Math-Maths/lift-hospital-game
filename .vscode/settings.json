@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Lift Health.sln"
+    "dotnet.defaultSolution": "lift-hospital-game.sln"
 }
