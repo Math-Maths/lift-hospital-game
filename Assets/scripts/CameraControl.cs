@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace LiftHospital
@@ -5,9 +6,23 @@ namespace LiftHospital
 
 public class CameraControl : MonoBehaviour
 {
-    [SerializeField] Transform playerPos;
+    
+    private Transform playerPos;
     
     [SerializeField] Vector3 offset; 
+
+
+    private void Start()
+    {
+        try
+        {
+            playerPos = GameObject.FindGameObjectWithTag(StringTag.Player).transform;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("No player found by the camera. Error message: " + e);
+        }
+    }
 
     private void LateUpdate()
     {

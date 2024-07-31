@@ -1,25 +1,41 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace LiftHospital
 {
 
-public class PickObjectBehaviour : MonoBehaviour
+public class PatientBehaviour : MonoBehaviour
 {
     private BoxCollider[] myCollider;
     private Outline outline;
+    public PatientState currentState;
+
+    public enum PatientState
+    {
+        HELPLESS,
+        CARRYING,
+        RESTING
+    }
 
     private void OnEnable()
     {
+        ChangeCurrentState(PatientState.HELPLESS);
         outline = GetComponent<Outline>();
         outline.enabled = false;
         myCollider = GetComponents<BoxCollider>();
     }
 
+    void ChangeCurrentState(PatientState state)
+    {
+        currentState = state;
+    }
+
     public void GotPicked()
     {
         outline.enabled = false;
-        gameObject.tag = StringTag.PickedObject;
+        ChangeCurrentState(PatientState.CARRYING);
         foreach(var item in myCollider)
         {
             item.enabled = false;
@@ -38,11 +54,17 @@ public class PickObjectBehaviour : MonoBehaviour
 
     IEnumerator EnablePicking()
     {
-        Debug.Log("call");
         yield return new WaitForSeconds(3f);
         Rigidbody rb = gameObject.GetComponent<Rigidbody>();
         Destroy(rb);
-        gameObject.tag = StringTag.PickObject;
+        if(currentState == PatientState.RESTING)
+        {
+
+        }
+        else
+        {
+            ChangeCurrentState(PatientState.HELPLESS);
+        }
     }
 
     void OnCollisionEnter(Collision other)
@@ -55,16 +77,21 @@ public class PickObjectBehaviour : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag(StringTag.StillPlace))
+        if(other.CompareTag(StringTag.RestSpot))
         {
+            BoxCollider restCollider = other.GetComponent<BoxCollider>();
+            restCollider.enabled = false;
+            MeshRenderer restRenderer = other.GetComponent<MeshRenderer>();
+            restRenderer.enabled = false;
             Rigidbody rb = GetComponent<Rigidbody>();
             Destroy(rb);
+            ChangeCurrentState(PatientState.RESTING);
 
-            gameObject.tag = StringTag.PickedObject;
-    
             transform.position = other.transform.position;
+            transform.rotation = other.transform.rotation;
+            LevelData.instance.UpdateFilledBeds();
         }
-        else if(other.CompareTag(StringTag.Player) && gameObject.tag == StringTag.PickObject)
+        else if(other.CompareTag(StringTag.Player) && currentState == PatientState.HELPLESS)
         {
             outline.enabled = true;
         }

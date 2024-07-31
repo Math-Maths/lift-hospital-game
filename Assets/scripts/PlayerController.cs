@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -56,10 +57,10 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         CheckGrounded();
-        Rotate();
         Move();
+        Rotate();
         OnJump();
-     CheckInteraction();
+        CheckInteraction();
     }
 
     void OnJump()
@@ -75,7 +76,7 @@ public class PlayerController : MonoBehaviour
         if(_objToPick != null && _canPick && pickAction.triggered && _holdingObj == null)
         {
             _canPick = false;
-            var pickObj = _objToPick.GetComponent<PickObjectBehaviour>();
+            var pickObj = _objToPick.GetComponent<PatientBehaviour>();
             pickObj.GotPicked();
             _holdingObj = _objToPick;
             _holdingObj.position = pickThreshold.position;
@@ -90,7 +91,7 @@ public class PlayerController : MonoBehaviour
 
     void ThrowObject(Vector3 dir)
     {
-        var pickObj = _holdingObj.GetComponent<PickObjectBehaviour>();
+        var pickObj = _holdingObj.GetComponent<PatientBehaviour>();
         Rigidbody rb = _holdingObj.gameObject.AddComponent<Rigidbody>();
         rb.AddForce(dir, ForceMode.Impulse);
         _holdingObj.parent = null;
@@ -100,10 +101,10 @@ public class PlayerController : MonoBehaviour
 
     void Rotate()
     {
-        Vector2 moveRaw = moveAction.ReadValue<Vector2>();
+        // Vector2 moveRaw = moveAction.ReadValue<Vector2>();
 
-        float rotInput = moveRaw.x * _rotationSpeed * Time.deltaTime;
-        Quaternion deltaRot = Quaternion.Euler(0f, rotInput, 0f);
+        // float rotInput = moveRaw.x * _rotationSpeed * Time.deltaTime;
+        Quaternion deltaRot = Quaternion.Euler(0f, _playerRb.velocity.x * _rotationSpeed * Time.deltaTime, 0f);
 
         _playerRb.MoveRotation(_playerRb.rotation * deltaRot);
     }
@@ -112,13 +113,32 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 moveRaw = moveAction.ReadValue<Vector2>();
 
-        Vector3 move = new Vector3(0f, 0f, moveRaw.y) * _speed * Time.deltaTime;
-        _playerRb.MovePosition(_playerRb.position + transform.TransformDirection(move));
+        Vector3 move = new Vector3(moveRaw.x, 0f, moveRaw.y) * _speed * Time.deltaTime;
+        //_playerRb.velocity += move;
+        if (move != Vector3.zero)
+        {
+            // Ajusta a rotação do objeto para apontar na direção do movimento
+            Quaternion targetRotation = Quaternion.LookRotation(move);
+            _playerRb.MoveRotation(targetRotation);
+        }
+        _playerRb.MovePosition(_playerRb.position + move);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag(StringTag.PickObject) && _holdingObj == null)
+
+        PatientBehaviour patient = null;
+
+        try
+        {
+            patient = other.gameObject.GetComponent<PatientBehaviour>();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("It's not a patient. Error message: " + e);
+        }
+
+        if(patient != null  && patient.currentState == PatientBehaviour.PatientState.HELPLESS && _holdingObj == null)
         {
             _canPick = true;
             _objToPick = other.transform;
@@ -127,7 +147,18 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if(other.CompareTag(StringTag.PickObject) || other.CompareTag("stil-place"))
+        PatientBehaviour patient = null;
+
+        try
+        {
+            patient = other.gameObject.GetComponent<PatientBehaviour>();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("It's not a patient. Error message: " + e);
+        }
+
+        if(patient != null && patient.currentState == PatientBehaviour.PatientState.HELPLESS || other.CompareTag(StringTag.RestSpot))
             _canPick = false;
     }
 
@@ -140,7 +171,7 @@ public class PlayerController : MonoBehaviour
             _playerRb.AddTorque(Vector3.up * impactForce, ForceMode.Impulse);
 
             if(_holdingObj != null) 
-                ThrowObject(new Vector3(Random.Range(.1f, .3f),Random.Range(.1f, .3f),Random.Range(.1f, .3f)) * impactForce);
+                ThrowObject(new Vector3(UnityEngine.Random.Range(.1f, .3f),UnityEngine.Random.Range(.1f, .3f),UnityEngine.Random.Range(.1f, .3f)) * impactForce);
         }
     }
 
