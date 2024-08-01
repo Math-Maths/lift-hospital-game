@@ -16,7 +16,7 @@ public class CameraControl : MonoBehaviour
     {
         try
         {
-            playerPos = GameObject.FindGameObjectWithTag(StringTag.Player).transform;
+            playerPos = GameObject.FindGameObjectWithTag(ConstantsValues.Player).transform;
         }
         catch (Exception e)
         {

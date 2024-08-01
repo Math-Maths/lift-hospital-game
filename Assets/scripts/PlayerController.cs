@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 _moveInput;
     private bool _canPick;
     private bool _isGrounded;
+    private bool _canMove;
     Transform _objToPick;
     Transform _holdingObj;
 
@@ -52,13 +53,13 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         _canPick = false;
+        _canMove = true;
     }
 
     void Update()
     {
         CheckGrounded();
         Move();
-        Rotate();
         OnJump();
         CheckInteraction();
     }
@@ -99,29 +100,22 @@ public class PlayerController : MonoBehaviour
         pickObj.GotLoose();
     }
 
-    void Rotate()
-    {
-        // Vector2 moveRaw = moveAction.ReadValue<Vector2>();
-
-        // float rotInput = moveRaw.x * _rotationSpeed * Time.deltaTime;
-        Quaternion deltaRot = Quaternion.Euler(0f, _playerRb.velocity.x * _rotationSpeed * Time.deltaTime, 0f);
-
-        _playerRb.MoveRotation(_playerRb.rotation * deltaRot);
-    }
-
     void Move()
     {
-        Vector2 moveRaw = moveAction.ReadValue<Vector2>();
-
-        Vector3 move = new Vector3(moveRaw.x, 0f, moveRaw.y) * _speed * Time.deltaTime;
-        //_playerRb.velocity += move;
-        if (move != Vector3.zero)
+        if(_canMove)
         {
-            // Ajusta a rotação do objeto para apontar na direção do movimento
-            Quaternion targetRotation = Quaternion.LookRotation(move);
-            _playerRb.MoveRotation(targetRotation);
+            Vector2 moveRaw = moveAction.ReadValue<Vector2>();
+
+            Vector3 move = new Vector3(moveRaw.x, 0f, moveRaw.y) * _speed * Time.deltaTime;
+            //_playerRb.velocity += move;
+            if (move != Vector3.zero)
+            {
+                // Ajusta a rotação do objeto para apontar na direção do movimento
+                Quaternion targetRotation = Quaternion.LookRotation(move);
+                _playerRb.MoveRotation(targetRotation);
+            }
+            _playerRb.MovePosition(_playerRb.position + move);
         }
-        _playerRb.MovePosition(_playerRb.position + move);
     }
 
     void OnTriggerEnter(Collider other)
@@ -158,14 +152,16 @@ public class PlayerController : MonoBehaviour
             Debug.Log("It's not a patient. Error message: " + e);
         }
 
-        if(patient != null && patient.currentState == PatientBehaviour.PatientState.HELPLESS || other.CompareTag(StringTag.RestSpot))
+        if(patient != null && patient.currentState == PatientBehaviour.PatientState.HELPLESS || other.CompareTag(ConstantsValues.RestSpot))
             _canPick = false;
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        if(collision.gameObject.tag == StringTag.MovingObstacle)
+        if(collision.gameObject.tag == ConstantsValues.MovingObstacle)
         {
+            StartCoroutine(DisableControlsShortly());
+            Debug.Log("call");
             Vector3 collisionDir = collision.GetContact(0).normal;
             _playerRb.AddForce(new Vector3(collisionDir.x, .2f, collisionDir.z) * impactForce, ForceMode.Impulse);
             _playerRb.AddTorque(Vector3.up * impactForce, ForceMode.Impulse);
@@ -173,6 +169,13 @@ public class PlayerController : MonoBehaviour
             if(_holdingObj != null) 
                 ThrowObject(new Vector3(UnityEngine.Random.Range(.1f, .3f),UnityEngine.Random.Range(.1f, .3f),UnityEngine.Random.Range(.1f, .3f)) * impactForce);
         }
+    }
+
+    IEnumerator DisableControlsShortly()
+    {
+        _canMove = false;
+        yield return new WaitForSeconds(2f);
+        _canMove = true;
     }
 
     private void CheckGrounded()

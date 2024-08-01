@@ -77,7 +77,7 @@ public class PatientBehaviour : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag(StringTag.RestSpot))
+        if(other.CompareTag(ConstantsValues.RestSpot))
         {
             BoxCollider restCollider = other.GetComponent<BoxCollider>();
             restCollider.enabled = false;
@@ -91,7 +91,7 @@ public class PatientBehaviour : MonoBehaviour
             transform.rotation = other.transform.rotation;
             LevelData.instance.UpdateFilledBeds();
         }
-        else if(other.CompareTag(StringTag.Player) && currentState == PatientState.HELPLESS)
+        else if(other.CompareTag(ConstantsValues.Player) && currentState == PatientState.HELPLESS)
         {
             outline.enabled = true;
         }
@@ -99,7 +99,7 @@ public class PatientBehaviour : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if(other.CompareTag(StringTag.Player))
+        if(other.CompareTag(ConstantsValues.Player))
         {
             outline.enabled = false;
         }
