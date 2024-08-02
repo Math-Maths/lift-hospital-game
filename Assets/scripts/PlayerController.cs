@@ -30,7 +30,6 @@ public class PlayerController : MonoBehaviour
     #region Editor Private FIelds
 
     [SerializeField] private float _speed = 5f;
-    [SerializeField] private float _rotationSpeed = 3f;
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private float _groundDistance = .1f;
     [SerializeField] private float _trowForce = 5f;
@@ -48,25 +47,43 @@ public class PlayerController : MonoBehaviour
         moveAction = _playerActions.actions["move"];
         jumpAction = _playerActions.actions["jump"];
         pickAction = _playerActions.actions["pick"];
+
+        GameManager.instance.OnGameStart += StartGame;
+        GameManager.instance.OnGameEnd += EndGame;
     }
 
     void Start()
     {
         _canPick = false;
+        _canMove = false;
+    }
+
+    void StartGame()
+    {
         _canMove = true;
+    }
+
+    void EndGame()
+    {
+        _canMove = false;
+        _isGrounded = false;
     }
 
     void Update()
     {
-        CheckGrounded();
-        Move();
-        OnJump();
-        CheckInteraction();
+        if(_canMove)
+        {
+            CheckGrounded();
+            Move();
+            OnJump();
+            CheckInteraction();
+        }
+        
     }
 
     void OnJump()
     {
-        if (_isGrounded && jumpAction.triggered)
+        if (_isGrounded && jumpAction.triggered && _canMove)
         {
             _playerRb.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
         }
@@ -102,20 +119,17 @@ public class PlayerController : MonoBehaviour
 
     void Move()
     {
-        if(_canMove)
-        {
-            Vector2 moveRaw = moveAction.ReadValue<Vector2>();
+        Vector2 moveRaw = moveAction.ReadValue<Vector2>();
 
-            Vector3 move = new Vector3(moveRaw.x, 0f, moveRaw.y) * _speed * Time.deltaTime;
-            //_playerRb.velocity += move;
-            if (move != Vector3.zero)
-            {
-                // Ajusta a rotação do objeto para apontar na direção do movimento
-                Quaternion targetRotation = Quaternion.LookRotation(move);
-                _playerRb.MoveRotation(targetRotation);
-            }
-            _playerRb.MovePosition(_playerRb.position + move);
+        Vector3 move = new Vector3(moveRaw.x, 0f, moveRaw.y) * _speed * Time.deltaTime;
+        //_playerRb.velocity += move;
+        if (move != Vector3.zero)
+        {
+            // Ajusta a rotação do objeto para apontar na direção do movimento
+            Quaternion targetRotation = Quaternion.LookRotation(move);
+            _playerRb.MoveRotation(targetRotation);
         }
+        _playerRb.MovePosition(_playerRb.position + move);
     }
 
     void OnTriggerEnter(Collider other)
@@ -161,7 +175,6 @@ public class PlayerController : MonoBehaviour
         if(collision.gameObject.tag == ConstantsValues.MovingObstacle)
         {
             StartCoroutine(DisableControlsShortly());
-            Debug.Log("call");
             Vector3 collisionDir = collision.GetContact(0).normal;
             _playerRb.AddForce(new Vector3(collisionDir.x, .2f, collisionDir.z) * impactForce, ForceMode.Impulse);
             _playerRb.AddTorque(Vector3.up * impactForce, ForceMode.Impulse);
@@ -175,7 +188,9 @@ public class PlayerController : MonoBehaviour
     {
         _canMove = false;
         yield return new WaitForSeconds(2f);
-        _canMove = true;
+        
+        if(LevelManager.instance.isGameRunning)
+            _canMove = true;
     }
 
     private void CheckGrounded()

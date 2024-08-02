@@ -8,7 +8,7 @@ namespace LiftHospital
 public class ChangeOppacity : MonoBehaviour
 {
 
-     public Transform player;
+    public Transform player;
     public Vector3 offest;
     [SerializeField]
     private List<Transform> ObjectToHide = new List<Transform>();

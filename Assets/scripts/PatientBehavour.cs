@@ -89,7 +89,7 @@ public class PatientBehaviour : MonoBehaviour
 
             transform.position = other.transform.position;
             transform.rotation = other.transform.rotation;
-            LevelData.instance.UpdateFilledBeds();
+            LevelManager.instance.UpdateFilledBeds();
         }
         else if(other.CompareTag(ConstantsValues.Player) && currentState == PatientState.HELPLESS)
         {

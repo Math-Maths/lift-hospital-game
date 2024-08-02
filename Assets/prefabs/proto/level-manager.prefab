@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3660133559524598313}
-  - component: {fileID: 2518893383540324923}
+  - component: {fileID: 1688542277323895358}
   m_Layer: 0
-  m_Name: level-data
+  m_Name: level-manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2518893383540324923
+--- !u!114 &1688542277323895358
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,7 +41,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 9028884354073507048}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3820bcb0e0efaf45ae887da8c6e6797, type: 3}
+  m_Script: {fileID: 11500000, guid: 02c61cf5f19a4d141a27bae40dd14331, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   levelName: test
+  levelTime: 100
+  timer: {fileID: 0}

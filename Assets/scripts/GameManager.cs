@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace LiftHospital
 {
@@ -8,11 +10,8 @@ public class GameManager : MonoBehaviour
 
     public static GameManager instance;
 
-    #region private fields
-
-    private LevelData levelData;
-
-    #endregion
+    public Action OnGameStart;
+    public Action OnGameEnd;
 
     void Awake()
     {
@@ -24,17 +23,12 @@ public class GameManager : MonoBehaviour
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        if(levelData = GameObject.FindAnyObjectByType<LevelData>())
-        {
-            //inicar o lvl
-        }
-
     }
 
-    
-
+    public void ReloadScene()
+    {
+        SceneManager.LoadScene(0);
+    }
 }
 
 }
