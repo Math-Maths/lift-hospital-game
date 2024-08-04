@@ -15,6 +15,7 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private float levelTime;
     [SerializeField] private TMP_Text timer;
     [SerializeField] GameObject loseHud;
+    [SerializeField] GameObject winHud;
     
     private int goalNum;
     private int currentFilledBeds;
@@ -54,7 +55,6 @@ public class LevelManager : MonoBehaviour
             timer.text = levelTime.ToString();
             if(levelTime <= 0)
             {
-                Debug.Log("Acabou :c");
                 isGameRunning = false;
                 loseHud.SetActive(true);
                 GameManager.instance.OnGameEnd();
@@ -62,15 +62,21 @@ public class LevelManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
     }
-
+    public void GameOver()
+    {
+        loseHud.SetActive(true);
+        GameManager.instance.OnGameEnd();
+    }
+    
     public void UpdateFilledBeds()
     {
         currentFilledBeds++;
 
         if(goalNum <= currentFilledBeds)
         {
-            Debug.Log("Ganho carai");
-            //win the level
+            isGameRunning = false;
+            GameManager.instance.OnGameEnd();
+            winHud.SetActive(true);
         }
     }
 

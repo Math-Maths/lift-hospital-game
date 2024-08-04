@@ -10,7 +10,11 @@ public class PatientBehaviour : MonoBehaviour
 {
     private BoxCollider[] myCollider;
     private Outline outline;
+    private Animator animator;
+
     public PatientState currentState;
+    
+    [SerializeField] float yOffset;
 
     public enum PatientState
     {
@@ -21,6 +25,7 @@ public class PatientBehaviour : MonoBehaviour
 
     private void OnEnable()
     {
+        animator = GetComponent<Animator>();
         ChangeCurrentState(PatientState.HELPLESS);
         outline = GetComponent<Outline>();
         outline.enabled = false;
@@ -34,6 +39,7 @@ public class PatientBehaviour : MonoBehaviour
 
     public void GotPicked()
     {
+        animator.SetBool("being-carried", true);
         outline.enabled = false;
         ChangeCurrentState(PatientState.CARRYING);
         foreach(var item in myCollider)
@@ -55,6 +61,7 @@ public class PatientBehaviour : MonoBehaviour
     IEnumerator EnablePicking()
     {
         yield return new WaitForSeconds(3f);
+        animator.SetBool("being-carried", false);
         Rigidbody rb = gameObject.GetComponent<Rigidbody>();
         Destroy(rb);
         if(currentState == PatientState.RESTING)
@@ -79,6 +86,7 @@ public class PatientBehaviour : MonoBehaviour
     {
         if(other.CompareTag(ConstantsValues.RestSpot))
         {
+            animator.SetBool("being-carried", false);
             BoxCollider restCollider = other.GetComponent<BoxCollider>();
             restCollider.enabled = false;
             MeshRenderer restRenderer = other.GetComponent<MeshRenderer>();
@@ -87,7 +95,7 @@ public class PatientBehaviour : MonoBehaviour
             Destroy(rb);
             ChangeCurrentState(PatientState.RESTING);
 
-            transform.position = other.transform.position;
+            transform.position = other.transform.position + Vector3.up * yOffset;
             transform.rotation = other.transform.rotation;
             LevelManager.instance.UpdateFilledBeds();
         }

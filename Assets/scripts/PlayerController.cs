@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody _playerRb;
     private PlayerInput _playerActions;
-    private Vector2 _moveInput;
+    private Animator animator;
     private bool _canPick;
     private bool _isGrounded;
     private bool _canMove;
@@ -43,17 +43,17 @@ public class PlayerController : MonoBehaviour
     {
         _playerActions = GetComponent<PlayerInput>();
         _playerRb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
 
         moveAction = _playerActions.actions["move"];
         jumpAction = _playerActions.actions["jump"];
         pickAction = _playerActions.actions["pick"];
-
-        GameManager.instance.OnGameStart += StartGame;
-        GameManager.instance.OnGameEnd += EndGame;
     }
 
     void Start()
     {
+        GameManager.instance.OnGameStart += StartGame;
+        GameManager.instance.OnGameEnd += EndGame;
         _canPick = false;
         _canMove = false;
     }
@@ -71,12 +71,18 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if(_canMove)
+        if(_canMove && _playerRb != null)
         {
             CheckGrounded();
             Move();
             OnJump();
             CheckInteraction();
+        }
+        
+        if(transform.position.y <= -10)
+        {
+            LevelManager.instance.GameOver();
+            Destroy(_playerRb);
         }
         
     }
@@ -93,6 +99,7 @@ public class PlayerController : MonoBehaviour
     {
         if(_objToPick != null && _canPick && pickAction.triggered && _holdingObj == null)
         {
+            animator.SetBool("carrying", true);
             _canPick = false;
             var pickObj = _objToPick.GetComponent<PatientBehaviour>();
             pickObj.GotPicked();
@@ -109,6 +116,7 @@ public class PlayerController : MonoBehaviour
 
     void ThrowObject(Vector3 dir)
     {
+        animator.SetBool("carrying", false);
         var pickObj = _holdingObj.GetComponent<PatientBehaviour>();
         Rigidbody rb = _holdingObj.gameObject.AddComponent<Rigidbody>();
         rb.AddForce(dir, ForceMode.Impulse);
@@ -125,9 +133,14 @@ public class PlayerController : MonoBehaviour
         //_playerRb.velocity += move;
         if (move != Vector3.zero)
         {
+            animator.SetBool("running", true);
             // Ajusta a rotação do objeto para apontar na direção do movimento
             Quaternion targetRotation = Quaternion.LookRotation(move);
             _playerRb.MoveRotation(targetRotation);
+        }
+        else
+        {
+            animator.SetBool("running", false);
         }
         _playerRb.MovePosition(_playerRb.position + move);
     }
@@ -186,11 +199,15 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator DisableControlsShortly()
     {
+        animator.SetBool("stunned", true);
         _canMove = false;
         yield return new WaitForSeconds(2f);
         
         if(LevelManager.instance.isGameRunning)
+        {
+            animator.SetBool("stunned", false);
             _canMove = true;
+        }
     }
 
     private void CheckGrounded()
